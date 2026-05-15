@@ -115,7 +115,7 @@ export function DeliveryModal({ isOpen, onClose, onSuccess }: DeliveryModalProps
           {formData.target === 'FUEL' ? (
             <div className="space-y-2">
               <Label>Seleccionar Tanque</Label>
-              <Select value={formData.fuelTankId} onValueChange={(v) => setFormData({ ...formData, fuelTankId: v })}>
+              <Select value={formData.fuelTankId} onValueChange={(v) => setFormData({ ...formData, fuelTankId: v || "" })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Tanque" />
                 </SelectTrigger>
