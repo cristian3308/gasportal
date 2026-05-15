@@ -126,7 +126,7 @@ export async function generateDailyReport() {
 ──────────────────
 📅 <b>Fecha:</b> ${todayStr}
 💰 <b>Ventas Totales:</b> $ ${totalSales.toLocaleString()} COP
-⛽ <b>Combustible:</b> ${sales.filter(s => s.category === 'COMBUSTIBLE').reduce((acc, s) => acc + s.fuelQuantity, 0).toLocaleString()} Gal
+⛽ <b>Combustible:</b> ${sales.filter(s => s.category === 'COMBUSTIBLE').reduce((acc, s) => acc + (s.fuelQuantity || 0), 0).toLocaleString()} Gal
 📊 <i>El reporte detallado ya está disponible en la sección de Archivos.</i>
     `);
 
