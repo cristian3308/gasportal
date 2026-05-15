@@ -129,7 +129,7 @@ export function DeliveryModal({ isOpen, onClose, onSuccess }: DeliveryModalProps
           ) : (
             <div className="space-y-2">
               <Label>Seleccionar Producto</Label>
-              <Select value={formData.productId} onValueChange={(v) => setFormData({ ...formData, productId: v })}>
+              <Select value={formData.productId} onValueChange={(v) => setFormData({ ...formData, productId: v || "" })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Producto" />
                 </SelectTrigger>
