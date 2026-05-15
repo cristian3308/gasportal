@@ -1,0 +1,322 @@
+// prisma/schema.prisma
+// GasPortal — Schema de base de datos completo
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum Role {
+  ADMIN
+  EMPLOYEE
+  VIEWER
+}
+
+enum PaymentCategory {
+  ARRIENDO
+  IMPUESTOS
+  NOMINA
+  PROVEEDORES
+  SERVICIOS
+  SEGUROS
+  MANTENIMIENTO
+  CREDITOS
+  OTROS
+}
+
+enum Recurrence {
+  NONE
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  BIMONTHLY
+  QUARTERLY
+  ANNUALLY
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+// ============================================
+// MODELOS
+// ============================================
+
+model User {
+  id           String    @id @default(uuid())
+  name         String
+  email        String    @unique
+  passwordHash String    @map("password_hash")
+  role         Role      @default(EMPLOYEE)
+  avatarUrl    String?   @map("avatar_url")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastLoginAt  DateTime? @map("last_login_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  folders      Folder[]
+  files        File[]
+  payments     Payment[]
+  alerts       PaymentAlert[]
+  activityLogs ActivityLog[]
+  invitationCodesCreated InvitationCode[] @relation("CodesCreated")
+  invitationCodeUsed    InvitationCode?  @relation("CodeUsed")
+  sales                 Sale[]
+  inventoryMovements    InventoryMovement[]
+
+  @@map("users")
+}
+
+// ... (existing models)
+
+model Sale {
+  id            String   @id @default(uuid())
+  amount        Float
+  paymentMethod String   @map("payment_method")
+  category      String   @default("COMBUSTIBLE")
+  fuelTankId    String?  @map("fuel_tank_id")
+  fuelQuantity  Float?   @map("fuel_quantity")
+  productId     String?  @map("product_id")
+  productQty    Int?     @map("product_qty")
+  description   String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdById   String   @map("created_by")
+  createdBy     User     @relation(fields: [createdById], references: [id])
+  
+  fuelTank      FuelTank? @relation(fields: [fuelTankId], references: [id])
+  product       Product?  @relation(fields: [productId], references: [id])
+
+  @@map("sales")
+}
+
+model InventoryMovement {
+  id            String   @id @default(uuid())
+  type          String   // IN (Compra/Viaje), OUT (Venta/Perdida), ADJUST (Ajuste)
+  fuelTankId    String?  @map("fuel_tank_id")
+  productId     String?  @map("product_id")
+  quantity      Float
+  description   String?
+  createdAt     DateTime @default(now()) @map("created_at")
+  createdById   String   @map("created_by")
+  
+  fuelTank      FuelTank? @relation(fields: [fuelTankId], references: [id])
+  product       Product?  @relation(fields: [productId], references: [id])
+  createdBy     User     @relation(fields: [createdById], references: [id])
+
+  @@map("inventory_movements")
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  brand       String?
+  category    String   @default("LUBRICANTE")
+  stock       Float    @default(0)
+  unit        String   @default("UNIDAD")
+  price       Float
+  minStock    Float    @default(5) @map("min_stock")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  sales       Sale[]
+  movements   InventoryMovement[]
+
+  @@map("products")
+}
+
+model FuelTank {
+  id           String   @id @default(uuid())
+  fuelType     String   @map("fuel_type") // CORRIENTE, EXTRA, DIESEL
+  currentLevel Float    @map("current_level")
+  capacity     Float
+  lastReading  DateTime @default(now()) @map("last_reading")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  sales        Sale[]
+  movements    InventoryMovement[]
+
+  @@map("fuel_tanks")
+}
+
+
+model Folder {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  color       String   @default("amber")
+  icon        String   @default("folder")
+  parentId    String?  @map("parent_id")
+  createdById String?  @map("created_by")
+  isDefault   Boolean  @default(false) @map("is_default")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  parent    Folder?  @relation("FolderHierarchy", fields: [parentId], references: [id])
+  children  Folder[] @relation("FolderHierarchy")
+  createdBy User?    @relation(fields: [createdById], references: [id])
+  files     File[]
+
+  @@map("folders")
+}
+
+model File {
+  id            String    @id @default(uuid())
+  folderId      String?   @map("folder_id")
+  uploadedById  String?   @map("uploaded_by")
+  name          String
+  storageKey    String    @map("storage_key")
+  fileSize      BigInt    @map("file_size")
+  mimeType      String    @map("mime_type")
+  extension     String?
+  thumbnailKey  String?   @map("thumbnail_key")
+  description   String?
+  tags          String[]
+  downloadCount Int       @default(0) @map("download_count")
+  isDeleted     Boolean   @default(false) @map("is_deleted")
+  deletedAt     DateTime? @map("deleted_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  folder     Folder?   @relation(fields: [folderId], references: [id])
+  uploadedBy User?     @relation(fields: [uploadedById], references: [id])
+  payments   Payment[]
+
+  @@index([folderId])
+  @@index([createdAt(sort: Desc)])
+  @@index([isDeleted])
+  @@map("files")
+}
+
+model Payment {
+  id          String          @id @default(uuid())
+  title       String
+  description String?
+  amount      Decimal         @db.Decimal(15, 2)
+  currency    String          @default("COP")
+  category    PaymentCategory
+  dueDate     DateTime        @map("due_date") @db.Date
+  recurrence  Recurrence      @default(NONE)
+  status      PaymentStatus   @default(PENDING)
+  paidAt      DateTime?       @map("paid_at")
+  paidAmount  Decimal?        @map("paid_amount") @db.Decimal(15, 2)
+  proofFileId String?         @map("payment_proof")
+  alertDays   Int             @default(5) @map("alert_days")
+  notes       String?
+  createdById String?         @map("created_by")
+  createdAt   DateTime        @default(now()) @map("created_at")
+  updatedAt   DateTime        @updatedAt @map("updated_at")
+
+  proofFile   File?          @relation(fields: [proofFileId], references: [id])
+  createdBy   User?          @relation(fields: [createdById], references: [id])
+  alerts      PaymentAlert[]
+
+  @@index([dueDate])
+  @@index([status])
+  @@map("payments")
+}
+
+model PaymentAlert {
+  id        String   @id @default(uuid())
+  paymentId String   @map("payment_id")
+  userId    String   @map("user_id")
+  alertType String   @default("in_app") @map("alert_type")
+  message   String?
+  isRead    Boolean  @default(false) @map("is_read")
+  sentAt    DateTime @default(now()) @map("sent_at")
+
+  payment Payment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("payment_alerts")
+}
+
+model ActivityLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json?
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("activity_log")
+}
+
+model Employee {
+  id              String      @id @default(uuid())
+  name            String
+  documentId      String      @unique @map("document_id")
+  position        String      @default("Islero")
+  baseSalary      Float       @map("base_salary")
+  transportAid    Boolean     @default(true) @map("transport_aid")
+  isActive        Boolean     @default(true) @map("is_active")
+  joinedAt        DateTime    @default(now()) @map("joined_at")
+  shifts          WorkShift[]
+  payrolls        Payroll[]
+
+  @@map("employees")
+}
+
+model WorkShift {
+  id              String    @id @default(uuid())
+  employeeId      String    @map("employee_id")
+  date            DateTime
+  shiftType       String    @default("REGULAR") @map("shift_type") // REGULAR, SUNDAY, HOLIDAY
+  hoursWorked     Float     @default(8) @map("hours_worked")
+  isNightShift    Boolean   @default(false) @map("is_night_shift")
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+
+  @@map("work_shifts")
+}
+
+model Payroll {
+  id              String    @id @default(uuid())
+  employeeId      String    @map("employee_id")
+  periodStart     DateTime  @map("period_start")
+  periodEnd       DateTime  @map("period_end")
+  daysWorked      Int       @map("days_worked")
+  basePayment     Float     @map("base_payment")
+  transportAid    Float     @map("transport_aid_amount")
+  extraHours      Float     @default(0) @map("extra_hours_amount")
+  deductions      Float     @map("total_deductions") // Health + Pension
+  netSalary       Float     @map("net_salary")
+  status          String    @default("DRAFT") // DRAFT, PAID
+  createdAt       DateTime  @default(now()) @map("created_at")
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+
+  @@map("payrolls")
+}
+
+model InvitationCode {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  role        Role     @default(EMPLOYEE)
+  isUsed      Boolean  @default(false) @map("is_used")
+  usedById    String?  @unique @map("used_by")
+  createdById String?  @map("created_by")
+  expiresAt   DateTime? @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  createdBy User? @relation("CodesCreated", fields: [createdById], references: [id])
+  usedBy    User? @relation("CodeUsed", fields: [usedById], references: [id])
+
+  @@map("invitation_codes")
+}
+

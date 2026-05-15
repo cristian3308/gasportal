@@ -1,0 +1,78 @@
+model ActivityLog {
+  id         String   @id @default(uuid())
+  userId     String?  @map("user_id")
+  action     String
+  entityType String?  @map("entity_type")
+  entityId   String?  @map("entity_id")
+  metadata   Json?
+  ipAddress  String?  @map("ip_address")
+  userAgent  String?  @map("user_agent")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User? @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt(sort: Desc)])
+  @@map("activity_log")
+}
+
+model Employee {
+  id              String      @id @default(uuid())
+  name            String
+  documentId      String      @unique @map("document_id")
+  position        String      @default("Islero")
+  baseSalary      Float       @map("base_salary")
+  transportAid    Boolean     @default(true) @map("transport_aid")
+  isActive        Boolean     @default(true) @map("is_active")
+  joinedAt        DateTime    @default(now()) @map("joined_at")
+  shifts          WorkShift[]
+  payrolls        Payroll[]
+
+  @@map("employees")
+}
+
+model WorkShift {
+  id              String    @id @default(uuid())
+  employeeId      String    @map("employee_id")
+  date            DateTime
+  shiftType       String    @default("REGULAR") @map("shift_type") // REGULAR, SUNDAY, HOLIDAY
+  hoursWorked     Float     @default(8) @map("hours_worked")
+  isNightShift    Boolean   @default(false) @map("is_night_shift")
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+
+  @@map("work_shifts")
+}
+
+model Payroll {
+  id              String    @id @default(uuid())
+  employeeId      String    @map("employee_id")
+  periodStart     DateTime  @map("period_start")
+  periodEnd       DateTime  @map("period_end")
+  daysWorked      Int       @map("days_worked")
+  basePayment     Float     @map("base_payment")
+  transportAid    Float     @map("transport_aid_amount")
+  extraHours      Float     @default(0) @map("extra_hours_amount")
+  deductions      Float     @map("total_deductions") // Health + Pension
+  netSalary       Float     @map("net_salary")
+  status          String    @default("DRAFT") // DRAFT, PAID
+  createdAt       DateTime  @default(now()) @map("created_at")
+  employee        Employee  @relation(fields: [employeeId], references: [id])
+
+  @@map("payrolls")
+}
+
+model InvitationCode {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  role        Role     @default(EMPLOYEE)
+  isUsed      Boolean  @default(false) @map("is_used")
+  usedById    String?  @unique @map("used_by")
+  createdById String?  @map("created_by")
+  expiresAt   DateTime? @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  createdBy User? @relation("CodesCreated", fields: [createdById], references: [id])
+  usedBy    User? @relation("CodeUsed", fields: [usedById], references: [id])
+
+  @@map("invitation_codes")
+}
