@@ -96,7 +96,7 @@ export function CreatePaymentModal({ isOpen, onClose, onSuccess }: CreatePayment
             </div>
             <div className="space-y-2">
               <Label htmlFor="category">Categoría</Label>
-              <Select value={formData.category} onValueChange={(v) => handleChange('category', v)}>
+              <Select value={formData.category} onValueChange={(v) => handleChange('category', v || '')}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccione..." />
                 </SelectTrigger>
@@ -128,7 +128,7 @@ export function CreatePaymentModal({ isOpen, onClose, onSuccess }: CreatePayment
             </div>
             <div className="space-y-2">
               <Label htmlFor="recurrence">Recurrencia</Label>
-              <Select value={formData.recurrence} onValueChange={(v) => handleChange('recurrence', v)}>
+              <Select value={formData.recurrence} onValueChange={(v) => handleChange('recurrence', v || '')}>
                 <SelectTrigger>
                   <SelectValue placeholder="Seleccione..." />
                 </SelectTrigger>

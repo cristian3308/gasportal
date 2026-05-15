@@ -98,7 +98,7 @@ export function NewSaleModal({ isOpen, onClose, onSuccess }: NewSaleModalProps) 
               <Label className="text-zinc-500 text-xs uppercase font-bold tracking-wider">Categoría</Label>
               <Select 
                 value={formData.category} 
-                onValueChange={(v) => setFormData({ ...formData, category: v, fuelTankId: '', productId: '' })}
+                onValueChange={(v) => setFormData({ ...formData, category: v || '', fuelTankId: '', productId: '' })}
               >
                 <SelectTrigger className="h-12 bg-zinc-50 border-zinc-200">
                   <SelectValue placeholder="Categoría" />
@@ -136,7 +136,7 @@ export function NewSaleModal({ isOpen, onClose, onSuccess }: NewSaleModalProps) 
                   <Label className="text-xs font-bold text-zinc-600 uppercase">Tanque / Tipo</Label>
                   <Select 
                     value={formData.fuelTankId} 
-                    onValueChange={(v) => setFormData({ ...formData, fuelTankId: v })}
+                    onValueChange={(v) => setFormData({ ...formData, fuelTankId: v || '' })}
                   >
                     <SelectTrigger className="bg-white">
                       <SelectValue placeholder="Seleccionar tanque" />
@@ -169,7 +169,7 @@ export function NewSaleModal({ isOpen, onClose, onSuccess }: NewSaleModalProps) 
                   <Label className="text-xs font-bold text-zinc-600 uppercase">Producto</Label>
                   <Select 
                     value={formData.productId} 
-                    onValueChange={(v) => setFormData({ ...formData, productId: v })}
+                    onValueChange={(v) => setFormData({ ...formData, productId: v || '' })}
                   >
                     <SelectTrigger className="bg-white">
                       <SelectValue placeholder="Seleccionar lubricante" />
@@ -200,7 +200,7 @@ export function NewSaleModal({ isOpen, onClose, onSuccess }: NewSaleModalProps) 
             <Label className="text-zinc-500 text-xs uppercase font-bold tracking-wider">Método de Pago</Label>
             <Select 
               value={formData.paymentMethod} 
-              onValueChange={(v) => setFormData({ ...formData, paymentMethod: v })}
+              onValueChange={(v) => setFormData({ ...formData, paymentMethod: v || '' })}
             >
               <SelectTrigger className="h-12 bg-zinc-50 border-zinc-200">
                 <SelectValue placeholder="Seleccionar método" />
