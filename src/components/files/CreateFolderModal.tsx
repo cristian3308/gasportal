@@ -32,13 +32,14 @@ export function CreateFolderModal({ isOpen, onClose, onSuccess, parentId, folder
   const [loading, setLoading] = useState(false);
   const isEditing = !!folderToEdit;
 
-  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<CreateFolderInput>({
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm({
     resolver: zodResolver(createFolderSchema),
     defaultValues: {
       name: folderToEdit?.name || '',
       description: folderToEdit?.description || '',
-      color: folderToEdit?.color || 'amber',
-      parentId: parentId || undefined,
+      color: folderToEdit?.color || '#3b82f6',
+      icon: folderToEdit?.icon || 'folder',
+      parentId: parentId || null
     }
   });
 
